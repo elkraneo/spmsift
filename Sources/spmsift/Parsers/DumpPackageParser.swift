@@ -158,24 +158,33 @@ public struct DumpPackageParser {
     }
 
     private func parseTargetDependencies(from target: [String: Any]) -> [String] {
-        guard let dependencies = target["dependencies"] as? [[String: Any]] else {
+        guard let dependencies = target["dependencies"] else {
             return []
         }
 
         var dependencyNames: [String] = []
-        for targetDep in dependencies {
-            if let product = targetDep["product"] as? [Any], product.count >= 1 {
-                // product format: ["ProductName", "package-name", ...]
-                if let productName = product[0] as? String {
-                    dependencyNames.append(productName)
-                }
-            } else if let byName = targetDep["byName"] as? [Any], byName.count >= 1 {
-                // byName format: ["package-name", ...]
-                if let packageName = byName[0] as? String {
-                    dependencyNames.append(packageName)
+
+        // Handle both simple string format (for tests) and complex object format (from dump-package)
+        if let stringDependencies = dependencies as? [String] {
+            // Simple string format: ["SwiftUI", "Combine"]
+            dependencyNames.append(contentsOf: stringDependencies)
+        } else if let objectDependencies = dependencies as? [[String: Any]] {
+            // Complex object format from real dump-package output
+            for targetDep in objectDependencies {
+                if let product = targetDep["product"] as? [Any], product.count >= 1 {
+                    // product format: ["ProductName", "package-name", ...]
+                    if let productName = product[0] as? String {
+                        dependencyNames.append(productName)
+                    }
+                } else if let byName = targetDep["byName"] as? [Any], byName.count >= 1 {
+                    // byName format: ["package-name", ...]
+                    if let packageName = byName[0] as? String {
+                        dependencyNames.append(packageName)
+                    }
                 }
             }
         }
+
         return dependencyNames
     }
 
@@ -226,25 +235,40 @@ public struct DumpPackageParser {
             }
 
             // Extract dependencies from the target
-            guard let targetDependencies = targetDict["dependencies"] as? [[String: Any]] else {
+            guard let targetDependencies = targetDict["dependencies"] else {
                 return (DependencyAnalysis(), [])
             }
 
             // Extract dependency names from target dependencies
             var targetDependencyNames: Set<String> = []
             var targetProductNames: Set<String> = []
-            for targetDep in targetDependencies {
-                if let product = targetDep["product"] as? [Any], product.count >= 2 {
-                    // product format: ["ProductName", "package-name", ...]
-                    if let productName = product[0] as? String, let packageName = product[1] as? String {
-                        targetDependencyNames.insert(packageName)
-                        targetProductNames.insert(productName)
-                    }
-                } else if let byName = targetDep["byName"] as? [Any], byName.count >= 1 {
-                    // byName format: ["package-name", ...]
-                    if let packageName = byName[0] as? String {
-                        targetDependencyNames.insert(packageName)
-                        targetProductNames.insert(packageName)
+
+            // Handle both simple string format (for tests) and complex object format (from dump-package)
+            if let stringDependencies = targetDependencies as? [String] {
+                // Simple string format: ["SwiftUI", "Combine"]
+                for depName in stringDependencies {
+                    targetDependencyNames.insert(depName)
+                    targetProductNames.insert(depName)
+                }
+            } else if let objectDependencies = targetDependencies as? [[String: Any]] {
+                // Complex object format from real dump-package output
+                for targetDep in objectDependencies {
+                    if let product = targetDep["product"] as? [Any], product.count >= 2 {
+                        // product format: ["ProductName", "package-name", ...]
+                        if let productName = product[0] as? String, let packageName = product[1] as? String {
+                            targetDependencyNames.insert(packageName)
+                            targetProductNames.insert(productName)
+                        } else if let productName = product[0] as? String {
+                            // Handle case where package name is not available
+                            targetDependencyNames.insert(productName)
+                            targetProductNames.insert(productName)
+                        }
+                    } else if let byName = targetDep["byName"] as? [Any], byName.count >= 1 {
+                        // byName format: ["package-name", ...]
+                        if let packageName = byName[0] as? String {
+                            targetDependencyNames.insert(packageName)
+                            targetProductNames.insert(packageName)
+                        }
                     }
                 }
             }
