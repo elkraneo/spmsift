@@ -43,13 +43,18 @@ cp .build/release/spmsift /usr/local/bin/
 ### Homebrew
 
 ```bash
-# Install via custom tap
+# Custom tap is required (not in main Homebrew repository)
 brew tap elkraneo/tap
 brew install spmsift
 
 # Verify installation
 which spmsift  # Should show /opt/homebrew/bin/spmsift
+
+# Access documentation
+man spmsift    # Comprehensive manual page
 ```
+
+**Note**: Both spmsift and sbsift are distributed via the custom tap `elkraneo/tap` and are not available in the official Homebrew core repository.
 
 ## Usage
 
