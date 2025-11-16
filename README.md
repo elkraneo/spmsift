@@ -34,17 +34,21 @@ Context savings: 95%+ while preserving all diagnostic information.
 ### From Source
 
 ```bash
-git clone https://github.com/your-username/spmsift.git
+git clone https://github.com/elkraneo/spmsift.git
 cd spmsift
 swift build -c release
 cp .build/release/spmsift /usr/local/bin/
 ```
 
-### Homebrew (coming soon)
+### Homebrew
 
 ```bash
-brew tap your-username/spmsift
+# Install via custom tap
+brew tap elkraneo/tap
 brew install spmsift
+
+# Verify installation
+which spmsift  # Should show /opt/homebrew/bin/spmsift
 ```
 
 ## Usage
