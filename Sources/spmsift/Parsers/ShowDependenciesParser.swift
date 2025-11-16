@@ -104,7 +104,7 @@ public struct ShowDependenciesParser {
     }
 
     private func parseDependencyLine(_ line: String) -> ExternalDependency? {
-        // Remove tree characters and whitespace
+        // Remove tree characters and whitespace (├── └── │── )
         let cleanLine = line.replacingOccurrences(of: "^[├│└─ ]+", with: "", options: .regularExpression)
         let trimmed = cleanLine.trimmingCharacters(in: .whitespaces)
 
@@ -145,15 +145,22 @@ public struct ShowDependenciesParser {
                 type: .sourceControl,
                 url: url
             )
-              } else if let urlRange = trimmed.range(of: #"<https?://[^>]+>"#, options: .regularExpression) {
-            // Format: "package-name<https://...>" - malformed but handle it
+                } else if let urlRange = trimmed.range(of: #"<[^>]+>"#, options: .regularExpression) {
+            // Format: "package-name<url@version>"
             let name = String(trimmed[..<urlRange.lowerBound]).trimmingCharacters(in: .whitespaces)
-            let version = String(trimmed[urlRange].dropFirst().dropLast()).components(separatedBy: "/").last ?? "unknown"
+            let urlWithVersion = String(trimmed[urlRange].dropFirst().dropLast()) // Remove < >
 
+            // Split URL and version
+            let components = urlWithVersion.components(separatedBy: "@")
+            let url = components.first ?? urlWithVersion
+            let version = components.count > 1 ? components[1] : "unspecified"
+
+            
             return ExternalDependency(
                 name: name,
                 version: version,
-                type: .sourceControl
+                type: .sourceControl,
+                url: url
             )
         } else {
             // Format: "package-name" (no version specified)

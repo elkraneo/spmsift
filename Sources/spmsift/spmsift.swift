@@ -82,11 +82,8 @@ struct SPMSift: ParsableCommand {
         }
 
         // Return appropriate exit code
-        if filteredResult.success && filteredResult.issues.allSatisfy({ $0.severity != .critical }) {
-            throw ExitCode.success
-        } else {
-            throw ExitCode.failure
-        }
+        // Exit 0 for analysis success, 1 only for tool failures
+        throw ExitCode.success
     }
 
     private func parseInput(_ input: String) throws -> PackageAnalysis {
